@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MapMemoApp());
 }
 
@@ -26,11 +30,27 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   Set<Marker> _markers = {};
   late GoogleMapController mapController;
-
-  final LatLng _center = const LatLng(43.7102, 7.2620);
+  final LatLng _center = const LatLng(43.7102, 7.2620); // Nice
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
+    _loadMemories();
+  }
+
+  void _loadMemories() async {
+    final snapshots = await FirebaseFirestore.instance.collection('souvenirs').get();
+    final loadedMarkers = snapshots.docs.map((doc) {
+      final data = doc.data();
+      return Marker(
+        markerId: MarkerId(doc.id),
+        position: LatLng(data['lat'], data['lng']),
+        infoWindow: InfoWindow(title: data['title'], snippet: data['description']),
+      );
+    }).toSet();
+
+    setState(() {
+      _markers = loadedMarkers;
+    });
   }
 
   void _addMemoryDialog() async {
@@ -63,9 +83,15 @@ class _MapScreenState extends State<MapScreen> {
             TextButton(
               child: const Text('Ajouter'),
               onPressed: () async {
-                final location = await mapController.getLatLng(
-                  ScreenCoordinate(x: 200, y: 300),
-                );
+                final location = await mapController.getLatLng(ScreenCoordinate(x: 200, y: 300));
+
+                await FirebaseFirestore.instance.collection('souvenirs').add({
+                  'title': title,
+                  'description': description,
+                  'lat': location.latitude,
+                  'lng': location.longitude,
+                  'timestamp': FieldValue.serverTimestamp(),
+                });
 
                 setState(() {
                   _markers.add(
@@ -97,7 +123,7 @@ class _MapScreenState extends State<MapScreen> {
         onMapCreated: _onMapCreated,
         initialCameraPosition: CameraPosition(
           target: _center,
-          zoom: 11.0,
+          zoom: 13.0,
         ),
         myLocationEnabled: true,
         myLocationButtonEnabled: true,
@@ -111,4 +137,3 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 }
-
