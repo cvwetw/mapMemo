@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const HomePage(),
+      home: const HomePage(),  // Appelle la nouvelle HomePage
     );
   }
 }
@@ -27,16 +27,31 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFE4E1),
-      appBar: AppBar(title: const Text('MapMemo')),
       body: Center(
-        child: ElevatedButton(
-          onPressed: () {
+        child: GestureDetector(
+          onTap: () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const MapPage()),
             );
           },
-          child: const Text('Ajouter un souvenir'),
+          child: Text(
+            'MapMemo',
+            style: TextStyle(
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+              color: Colors.deepPurple,
+              letterSpacing: 4,
+              shadows: [
+                Shadow(
+                  blurRadius: 6,
+                  color: Colors.deepPurpleAccent.withOpacity(0.6),
+                  offset: const Offset(3, 3),
+                ),
+              ],
+              fontFamily: 'Roboto',
+            ),
+          ),
         ),
       ),
     );
